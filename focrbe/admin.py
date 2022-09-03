@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Detection
+from .models import Detection, ChungMinhNhanDan
 # Register your models here.
 
 
@@ -21,4 +21,24 @@ class DetectionAdmin(admin.ModelAdmin):
     )
 
 
+class ChungMinhNhanDanAdmin(admin.ModelAdmin):
+    list_display = ('id', 'soCmnd', 'hoVaTen',
+                    'ngaySinh', 'nguyenQuan', 'noiDktt')
+    list_filter = ('id', 'soCmnd', 'hoVaTen',
+                   'ngaySinh', 'nguyenQuan', 'noiDktt')
+    search_fields = ('soCmnd', 'hoVaTen', 'ngaySinh', 'nguyenQuan', 'noiDktt')
+    ordering = ('-id',)
+    readonly_fields = ['id']
+    fieldsets = (
+        (None, {
+            'fields': ('soCmnd', 'hoVaTen', 'ngaySinh', 'nguyenQuan', 'noiDktt')
+        }),
+        ('Advanced options', {
+            'classes': ('collapse',),
+            'fields': ('id',)
+        }),
+    )
+
+
 admin.site.register(Detection, DetectionAdmin)
+admin.site.register(ChungMinhNhanDan, ChungMinhNhanDanAdmin)
