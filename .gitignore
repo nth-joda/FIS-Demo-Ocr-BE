@@ -201,3 +201,5 @@ cython_debug/
 .static/*
 
 .migrations/*
+
+*/__pycache__/*
