@@ -27,7 +27,7 @@ ocr = PaddleOCR(use_angle_cls=True, lang='en')
 # Setup VietOCR
 config = Cfg.load_config_from_name('vgg_transformer')
 # config['weights'] = './weights/transformerocr.pth'
-config['weights'] = 'pretrained/transformerocr.pth'
+config['weights'] = 'PaddleOCR/pretrained/transformerocr.pth'
 config['cnn']['pretrained'] = False
 # config['device'] = 'cuda:0'
 config['device'] = 'cpu'
