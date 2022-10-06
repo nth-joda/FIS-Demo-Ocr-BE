@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Detection, ChungMinhNhanDan
+from .models import Detection, ChungMinhNhanDan, DonXinNghiViec
 # Register your models here.
 
 
@@ -39,6 +39,33 @@ class ChungMinhNhanDanAdmin(admin.ModelAdmin):
         }),
     )
 
+class DonXinNghiViecAdmin(admin.ModelAdmin):
+
+    list_display = ('tenCongTy', 'tenPhongNhanSu', 'tenTruongPhong',
+                    'hoVaTen', 'ngaySinh', 'chucVu', 'boPhan', 'nghiTuNgay', 'lyDo',
+                    'thoiGianGanBo', 'kinhNghiem', 'nguoiBanGiao', 'boPhanBanGiao',
+                    'congViecBanGiao', 'ngayVietDon')
+    list_filter = ('tenCongTy', 'tenPhongNhanSu', 'tenTruongPhong',
+                   'hoVaTen', 'ngaySinh', 'chucVu', 'boPhan', 'nghiTuNgay',
+                   'lyDo', 'thoiGianGanBo', 'kinhNghiem', 'nguoiBanGiao',
+                   'boPhanBanGiao', 'congViecBanGiao', 'ngayVietDon')
+    search_fields = ('hoVaTen', 'ngaySinh', 'chucVu', 'boPhan', 'nguoiBanGiao', 'boPhanBanGiao')
+    ordering = ('-id',)
+    readonly_fields = ['id']
+    fieldsets = (
+        (None, {
+            'fields': ('tenCongTy', 'tenPhongNhanSu', 'tenTruongPhong',
+                   'hoVaTen', 'ngaySinh', 'chucVu', 'boPhan', 'nghiTuNgay',
+                   'lyDo', 'thoiGianGanBo', 'kinhNghiem', 'nguoiBanGiao',
+                   'boPhanBanGiao', 'congViecBanGiao', 'ngayVietDon')
+        }),
+        ('Advanced options', {
+            'classes': ('collapse',),
+            'fields': ('id',)
+        }),
+    )
+
 
 admin.site.register(Detection, DetectionAdmin)
 admin.site.register(ChungMinhNhanDan, ChungMinhNhanDanAdmin)
+admin.site.register(DonXinNghiViec, DonXinNghiViecAdmin)

@@ -1,4 +1,7 @@
 from unittest import result
+
+from django.forms import model_to_dict
+from focrbe.utils import donXinNghiViecMapper
 from vietocr.tool.config import Cfg
 from vietocr.tool.predictor import Predictor
 from http.client import HTTPResponse
@@ -13,7 +16,7 @@ import numpy as np
 from PIL import Image
 from django.core.files.base import ContentFile
 import base64
-
+import time
 
 import json
 import cv2
@@ -105,7 +108,7 @@ def det_VNese_Text(boxes, image_arr):
 def ocr_detect(filePath):
     ''' orc distinguish  '''
     print("filePath is ", filePath)
-    result = ocr.ocr(filePath, cls=True)
+    start_time = time.time()
     boxes, txts, scores = getBoxes_Texts_Scores(filePath)
     cmnd_img = cv2.imread(filePath)
     cmnd_text = det_VNese_Text(boxes, cmnd_img)
@@ -146,9 +149,13 @@ def ocr_detect(filePath):
     model = ChungMinhNhanDan(soCmnd=cmnd_detected.soCmnd, hoVaTen=cmnd_detected.hoTen,
                              ngaySinh=cmnd_detected.ngaySinh, nguyenQuan=cmnd_detected.nguyenQuan, noiDktt=cmnd_detected.noiDktt, imagePath=filePath)
     model.save()
-    cmnd_detected_json = json.dumps(cmnd_detected.__dict__)
+    donXinNghiViecModel = donXinNghiViecMapper(full_string)
+    donXinNghiViecModel.save()
+    cmnd_detected_json = json.dumps(cmnd_detected.__dict__, indent=4, sort_keys=True)
+    donXinNghiViec_json = json.dumps(model_to_dict(donXinNghiViecModel), indent=4, sort_keys=True)
+    period = time.time() - start_time
     return JsonResponse({
-        'message': 'successful!', "rawText": full_string, "cmnd": cmnd_detected_json
+        'message': 'successful!', "rawText": full_string, "cmnd": cmnd_detected_json, "donXinNghiViec": donXinNghiViec_json, "processedTime": period
     }, status=status.HTTP_200_OK)
 
 

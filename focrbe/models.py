@@ -28,3 +28,23 @@ class ChungMinhNhanDan(models.Model):
 
     def __str__(self):
         return self.soCmnd + " - " + self.hoVaTen
+    
+
+class DonXinNghiViec(models.Model):
+    tenCongTy = models.TextField()
+    tenPhongNhanSu = models.TextField()
+    tenTruongPhong = models.TextField()
+    hoVaTen = models.TextField()
+    ngaySinh = models.TextField()
+    chucVu = models.TextField()
+    boPhan = models.TextField()
+    nghiTuNgay = models.TextField()
+    lyDo = models.TextField()
+    thoiGianGanBo = models.TextField()
+    kinhNghiem =models.TextField()
+    nguoiBanGiao = models.TextField()
+    boPhanBanGiao = models.TextField()
+    congViecBanGiao = models.TextField()
+    ngayVietDon = models.TextField()
+    def __str__(self):
+        return self.hoVaTen + " - " + self.chucVu + " - " + self.boPhan
