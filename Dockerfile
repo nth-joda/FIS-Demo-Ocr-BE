@@ -1,10 +1,14 @@
-FROM python:3.9.14-slim-buster
+FROM python:3.9.5-slim-buster
 
 WORKDIR /app
 
-COPY requirementsOct22.txt requirements.txt
+COPY requirements.txt requirements.txt
 
-RUN pip3 install -r requirements.txt
+RUN apt-get update \
+    && apt-get -y install libpq-dev gcc \
+    && pip3 install psycopg2 \
+    && apt-get install -y python3-opencv \
+    && pip3 install -r requirements.txt
 
 COPY . .
 
