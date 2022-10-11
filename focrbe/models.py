@@ -5,6 +5,7 @@ from django.db import models
 
 class Detection(models.Model):
     image = models.ImageField(upload_to='images/')
+    resultImage = models.ImageField(upload_to='images/')
     type = models.TextField()
     result = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
@@ -28,7 +29,7 @@ class ChungMinhNhanDan(models.Model):
 
     def __str__(self):
         return self.soCmnd + " - " + self.hoVaTen
-    
+
 
 class DonXinNghiViec(models.Model):
     tenCongTy = models.TextField()
@@ -41,10 +42,11 @@ class DonXinNghiViec(models.Model):
     nghiTuNgay = models.TextField()
     lyDo = models.TextField()
     thoiGianGanBo = models.TextField()
-    kinhNghiem =models.TextField()
+    kinhNghiem = models.TextField()
     nguoiBanGiao = models.TextField()
     boPhanBanGiao = models.TextField()
     congViecBanGiao = models.TextField()
     ngayVietDon = models.TextField()
+
     def __str__(self):
         return self.hoVaTen + " - " + self.chucVu + " - " + self.boPhan

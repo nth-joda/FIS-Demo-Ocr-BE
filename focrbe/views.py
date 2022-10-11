@@ -13,16 +13,17 @@ from rest_framework import status
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from PaddleOCR.paddleocr import PaddleOCR, draw_ocr
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFont, ImageDraw
 from django.core.files.base import ContentFile
 import base64
 import time
-
 import json
 import cv2
 import Levenshtein
 import os
+from io import BytesIO
 import unidecode
+import random
 from.serializers import DetectionSerializer
 # Create your views here.
 # Setup PaddleOCR
@@ -30,7 +31,7 @@ ocr = PaddleOCR(use_angle_cls=True, lang='en')
 # Setup VietOCR
 config = Cfg.load_config_from_name('vgg_transformer')
 # config['weights'] = './weights/transformerocr.pth'
-config['weights'] = 'PaddleOCR/pretrained/transformerocr.pth'
+config['weights'] = 'weights/vietOcr/transformerocr.pth'
 config['cnn']['pretrained'] = False
 # config['device'] = 'cuda:0'
 config['device'] = 'cpu'
@@ -84,34 +85,67 @@ noiDkhkTt = ["Nơi ĐKHK thường trú", "end",
 cmnd_fields = [soCmnd, hoTen, ngaySinh, nguyenQuan, noiDkhkTt]
 
 
+def putTextTo(image, text, box, color):
+    (r, g, b) = color
+    fontSize = box[3] - box[1] - 2
+    if(fontSize > 30):
+        fontSize = fontSize - 15
+    image = Image.fromarray(image)
+    font = ImageFont.truetype("arial.ttf", int(fontSize))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle([(box[0], box[1]), (box[2], box[3])],
+                   outline=color, width=int(fontSize/10))
+    draw.text((box[0], box[1]-fontSize), text, color, font=font)
+
+    return np.array(image)
+
+
 def det_VNese_Text(boxes, image_arr):
     detected_text = []
+    text_image = image_arr
     for i in range(len(boxes)):
         box = boxes[i]
         box = np.reshape(np.array(box), [-1, 1, 2]).astype(np.int64)
         top_left_x = min([box[0][0][0], box[1][0][0],
-                         box[2][0][0], box[3][0][0]])
-        top_left_y = min([box[0][0][1], box[1][0][1],
-                         box[2][0][1], box[3][0][1]])
-        bot_right_x = max([box[0][0][0], box[1][0][0],
                           box[2][0][0], box[3][0][0]])
-        bot_right_y = max([box[0][0][1], box[1][0][1],
+        top_left_y = min([box[0][0][1], box[1][0][1],
                           box[2][0][1], box[3][0][1]])
+        bot_right_x = max([box[0][0][0], box[1][0][0],
+                           box[2][0][0], box[3][0][0]])
+        bot_right_y = max([box[0][0][1], box[1][0][1],
+                           box[2][0][1], box[3][0][1]])
         cropped_arr = np.array(
             image_arr[top_left_y:bot_right_y+1, top_left_x:bot_right_x+1])
         dt = detector.predict(Image.fromarray(cropped_arr))
         item = [[top_left_x, top_left_y, bot_right_x, bot_right_y], dt]
+
         detected_text.append(item)
-    return detected_text
+
+        r = random.randint(0, 88)
+        g = random.randint(0, 88)
+        b = random.randint(0, 88)
+        text_image = putTextTo(
+            text_image, dt, [top_left_x, top_left_y, bot_right_x, bot_right_y], (r, g, b))
+
+    return detected_text, text_image
 
 
-def ocr_detect(filePath):
+def ocr_detect(data, type):
+    image = data['image']
+    image = image.split(';base64,')[1]
+    image = ContentFile(base64.b64decode(image), name='image.png')
+    detectionObject = Detection(image=image, type=type, resultImage=image)
+    save_model = detectionObject.save()
+    filePath = save_model.image.path
     ''' orc distinguish  '''
     print("filePath is ", filePath)
+    responseObj = {
+        'message': 'successful!',
+    }
     start_time = time.time()
     boxes, txts, scores = getBoxes_Texts_Scores(filePath)
     cmnd_img = cv2.imread(filePath)
-    cmnd_text = det_VNese_Text(boxes, cmnd_img)
+    cmnd_text, text_image = det_VNese_Text(boxes, cmnd_img)
     full_string = ""
     for txtBlock in cmnd_text:
         full_string = full_string + txtBlock[1] + " "
@@ -132,31 +166,43 @@ def ocr_detect(filePath):
         field[4] = stopPoint
         field[3] = startPoint
 
-    # Lấy field values:
-    for id in range(len(cmnd_fields)):
-        field = cmnd_fields[id]
-        if id < len(cmnd_fields) - 1:
-            nextField = cmnd_fields[id + 1]
-            print(nextField[3])
-            field[2] = full_string[field[4]+1: nextField[3] - 1]
-        else:
-            field[2] = full_string[field[4]+1: len(full_string) - 1]
-    cmndFields = []
-    for field in cmnd_fields:
-        cmndFields.append(field[2])
-    cmnd_detected = Cmnd(cmndFields)
+    if (type == "cmnd" or type == "all"):
+        # Lấy field values:
+        for id in range(len(cmnd_fields)):
+            field = cmnd_fields[id]
+            if id < len(cmnd_fields) - 1:
+                nextField = cmnd_fields[id + 1]
+                print(nextField[3])
+                field[2] = full_string[field[4]+1: nextField[3] - 1]
+            else:
+                field[2] = full_string[field[4]+1: len(full_string) - 1]
+        cmndFields = []
+        for field in cmnd_fields:
+            cmndFields.append(field[2])
+        cmnd_detected = Cmnd(cmndFields)
 
-    model = ChungMinhNhanDan(soCmnd=cmnd_detected.soCmnd, hoVaTen=cmnd_detected.hoTen,
-                             ngaySinh=cmnd_detected.ngaySinh, nguyenQuan=cmnd_detected.nguyenQuan, noiDktt=cmnd_detected.noiDktt, imagePath=filePath)
-    model.save()
-    donXinNghiViecModel = donXinNghiViecMapper(full_string)
-    donXinNghiViecModel.save()
-    cmnd_detected_json = json.dumps(cmnd_detected.__dict__, indent=4, sort_keys=True)
-    donXinNghiViec_json = json.dumps(model_to_dict(donXinNghiViecModel), indent=4, sort_keys=True)
+        model = ChungMinhNhanDan(soCmnd=cmnd_detected.soCmnd, hoVaTen=cmnd_detected.hoTen,
+                                 ngaySinh=cmnd_detected.ngaySinh, nguyenQuan=cmnd_detected.nguyenQuan, noiDktt=cmnd_detected.noiDktt, imagePath=filePath)
+        model.save()
+        responseObj['cmnd'] = json.dumps(
+            cmnd_detected.__dict__, indent=4, sort_keys=True)
+
+    if(type == "donXinNghiViec" or type == "all"):
+        donXinNghiViecModel = donXinNghiViecMapper(full_string)
+        donXinNghiViecModel.save()
+        responseObj['donXinNghiViec'] = json.dumps(
+            model_to_dict(donXinNghiViecModel), indent=4, sort_keys=True)
+
     period = time.time() - start_time
-    return JsonResponse({
-        'message': 'successful!', "rawText": full_string, "cmnd": cmnd_detected_json, "donXinNghiViec": donXinNghiViec_json, "processedTime": period
-    }, status=status.HTTP_200_OK)
+    buffered = BytesIO()
+    Image.fromarray(text_image).save(buffered, format="JPEG")
+    img_str = base64.b64encode(buffered.getvalue())
+
+    responseObj['processedTime'] = period
+    responseObj['rawText'] = full_string
+    responseObj['textImage'] = img_str.decode('utf-8')
+
+    return JsonResponse(responseObj, status=status.HTTP_200_OK)
 
 
 class ImageDetection(ListCreateAPIView):
@@ -170,13 +216,7 @@ class ImageDetection(ListCreateAPIView):
         data = request.data
         try:
             type = data['type']
-            image = data['image']
-            image = image.split(';base64,')[1]
-            image = ContentFile(base64.b64decode(image), name='image.png')
-            detectionObject = Detection(image=image, type=type)
-            save_model = detectionObject.save()
-            print(save_model)
-            return ocr_detect(save_model.image.path)
+            return ocr_detect(data, type=type)
 
         except Exception as e:
             return JsonResponse({

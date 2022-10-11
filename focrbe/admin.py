@@ -4,15 +4,16 @@ from .models import Detection, ChungMinhNhanDan, DonXinNghiViec
 
 
 class DetectionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'image', 'type', 'result', 'created', 'updated')
-    list_filter = ('id', 'type', 'result', 'created', 'updated')
+    list_display = ('id', 'image', 'type', 'result',
+                    'resultImage', 'created', 'updated')
+    list_filter = ('id', 'type', 'result', 'resultImage', 'created', 'updated')
     search_fields = ('type', 'result', 'created', 'updated')
     date_hierarchy = 'created'
     ordering = ('-created',)
     readonly_fields = ['created', 'updated']
     fieldsets = (
         (None, {
-            'fields': ('image', 'type', 'result')
+            'fields': ('image', 'type', 'result', 'resultImage')
         }),
         ('Advanced options', {
             'classes': ('collapse',),
@@ -39,6 +40,7 @@ class ChungMinhNhanDanAdmin(admin.ModelAdmin):
         }),
     )
 
+
 class DonXinNghiViecAdmin(admin.ModelAdmin):
 
     list_display = ('tenCongTy', 'tenPhongNhanSu', 'tenTruongPhong',
@@ -49,15 +51,16 @@ class DonXinNghiViecAdmin(admin.ModelAdmin):
                    'hoVaTen', 'ngaySinh', 'chucVu', 'boPhan', 'nghiTuNgay',
                    'lyDo', 'thoiGianGanBo', 'kinhNghiem', 'nguoiBanGiao',
                    'boPhanBanGiao', 'congViecBanGiao', 'ngayVietDon')
-    search_fields = ('hoVaTen', 'ngaySinh', 'chucVu', 'boPhan', 'nguoiBanGiao', 'boPhanBanGiao')
+    search_fields = ('hoVaTen', 'ngaySinh', 'chucVu',
+                     'boPhan', 'nguoiBanGiao', 'boPhanBanGiao')
     ordering = ('-id',)
     readonly_fields = ['id']
     fieldsets = (
         (None, {
             'fields': ('tenCongTy', 'tenPhongNhanSu', 'tenTruongPhong',
-                   'hoVaTen', 'ngaySinh', 'chucVu', 'boPhan', 'nghiTuNgay',
-                   'lyDo', 'thoiGianGanBo', 'kinhNghiem', 'nguoiBanGiao',
-                   'boPhanBanGiao', 'congViecBanGiao', 'ngayVietDon')
+                       'hoVaTen', 'ngaySinh', 'chucVu', 'boPhan', 'nghiTuNgay',
+                       'lyDo', 'thoiGianGanBo', 'kinhNghiem', 'nguoiBanGiao',
+                       'boPhanBanGiao', 'congViecBanGiao', 'ngayVietDon')
         }),
         ('Advanced options', {
             'classes': ('collapse',),
